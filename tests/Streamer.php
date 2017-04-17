@@ -34,8 +34,10 @@ class Streamer extends PHPUnit_Framework_TestCase
 		$this->assertTrue($ret);
 
 		$this->streamer->finalize();
-
-		$this->assertFileInTar($fileName);
+		
+		// Archive_Tar cuts file names at 100th character
+		$trimmedFileName = substr($fileName, 0, 100);
+		$this->assertFileInTar($trimmedFileName);
 	}
 
 	/**
@@ -67,7 +69,7 @@ class Streamer extends PHPUnit_Framework_TestCase
 	{
 		return [
 			['foo.bar', '1234567890'],
-//			['foobar1234foobar1234foobar1234foobar1234foobar1234foobar1234foobar1234foobar1234foobar1234foobar1234.txt', 'abcdefgh']
+			['foobar1234foobar1234foobar1234foobar1234foobar1234foobar1234foobar1234foobar1234foobar1234foobar1234.txt', 'abcdefgh']
 		];
 	}
 
