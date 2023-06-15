@@ -37,32 +37,32 @@ class TarHeader {
 	
 	private $reserved = '';
 	
-	public function setName($name){
+	public function setName($name) {
 		$this->name = $name;
 		return $this;
 	}
 	
-	public function setSize($size){
+	public function setSize($size) {
 		$this->size = $size;
 		return $this;
 	}
 	
-	public function setMtime($mtime){
+	public function setMtime($mtime) {
 		$this->mtime = $mtime;
 		return $this;
 	}
 	
-	public function setTypeflag($typeflag){
+	public function setTypeflag($typeflag) {
 		$this->typeflag = $typeflag;
 		return $this;
 	}
 	
-	public function setPrefix($prefix){
+	public function setPrefix($prefix) {
 		$this->prefix = $prefix;
 		return $this;
 	}
 
-	public function getHeader(){
+	public function getHeader() {
 		$fields = [
 			['a100', substr($this->name, 0, 100)],
 			['a8', str_pad($this->mode, 7, '0', STR_PAD_LEFT)],
@@ -89,11 +89,11 @@ class TarHeader {
 		
 		// Compute header checksum
 		$checksum = str_pad(decoct($this->computeUnsignedChecksum($header)), 6, "0", STR_PAD_LEFT);
-		for ($i = 0; $i < 6; $i++){
+		for ($i = 0; $i < 6; $i++) {
 			$header[(148 + $i)] = substr($checksum, $i, 1);
 		}
-		$header[154] = chr(0);
-		$header[155] = chr(32);
+		$header[154] = \chr(0);
+		$header[155] = \chr(32);
 		
 		return $header;
 	}
@@ -104,11 +104,11 @@ class TarHeader {
 	 * @param array $fields key being the format string and value being the data to pack
 	 * @return string binary packed data returned from pack()
 	 */
-	protected function packFields($fields){
-		list ($fmt, $args) = ['', []];
+	protected function packFields($fields) {
+		list($fmt, $args) = ['', []];
 
 		// populate format string and argument list
-		foreach ($fields as $field){
+		foreach ($fields as $field) {
 			$fmt .= $field[0];
 			$args[] = $field[1];
 		}
@@ -117,7 +117,7 @@ class TarHeader {
 		array_unshift($args, $fmt);
 
 		// build output string from header and compressed data
-		return call_user_func_array('pack', $args);
+		return \call_user_func_array('pack', $args);
 	}
 	
 	/**
@@ -126,15 +126,15 @@ class TarHeader {
 	 * @param string $header
 	 * @return string unsigned checksum
 	 */
-	protected function computeUnsignedChecksum($header){
+	protected function computeUnsignedChecksum($header) {
 		$unsignedChecksum = 0;
-		for ($i = 0; $i < 512; $i++){
-			$unsignedChecksum += ord($header[$i]);
+		for ($i = 0; $i < 512; $i++) {
+			$unsignedChecksum += \ord($header[$i]);
 		}
-		for ($i = 0; $i < 8; $i++){
-			$unsignedChecksum -= ord($header[148 + $i]);
+		for ($i = 0; $i < 8; $i++) {
+			$unsignedChecksum -= \ord($header[148 + $i]);
 		}
-		$unsignedChecksum += ord(" ") * 8;
+		$unsignedChecksum += \ord(" ") * 8;
 
 		return $unsignedChecksum;
 	}
