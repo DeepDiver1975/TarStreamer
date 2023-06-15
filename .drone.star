@@ -49,8 +49,11 @@ config = {
     "phpstan": False,
     "phan": False,
     "phpunit": {
-        "defaultDatabases": {
+        "sqliteOnly": {
             "coverage": False,
+            "databases": [
+                "sqlite",
+            ],
             "enableApp": False,
             "extraCommandsBeforeTestRun": [
                 "apt update -y",
