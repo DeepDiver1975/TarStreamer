@@ -49,7 +49,8 @@ config = {
     "phpstan": False,
     "phan": False,
     "phpunit": {
-        "sqliteOnly": {
+        "php74": {
+            "phpVersions": [7.4],
             "coverage": False,
             "databases": [
                 "sqlite",
@@ -58,6 +59,42 @@ config = {
             "extraCommandsBeforeTestRun": [
                 "apt update -y",
                 "apt-get install php7.4-xdebug -y",
+            ],
+        },
+        "php80": {
+            "phpVersions": [8.0],
+            "coverage": False,
+            "databases": [
+                "sqlite",
+            ],
+            "enableApp": False,
+            "extraCommandsBeforeTestRun": [
+                "apt update -y",
+                "apt-get install php8.0-xdebug -y",
+            ],
+        },
+        "php81": {
+            "phpVersions": [8.1],
+            "coverage": False,
+            "databases": [
+                "sqlite",
+            ],
+            "enableApp": False,
+            "extraCommandsBeforeTestRun": [
+                "apt update -y",
+                "apt-get install php8.1-xdebug -y",
+            ],
+        },
+        "php82": {
+            "phpVersions": [8.2],
+            "coverage": False,
+            "databases": [
+                "sqlite",
+            ],
+            "enableApp": False,
+            "extraCommandsBeforeTestRun": [
+                "apt update -y",
+                "apt-get install php8.2-xdebug -y",
             ],
         },
     },
