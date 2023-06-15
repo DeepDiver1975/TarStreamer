@@ -13,14 +13,14 @@ class Streamer extends TestCase {
 	/** @var TarStreamer */
 	private $streamer;
 
-	public function setUp() {
+	public function setUp(): void {
 		$this->archive = tempnam('/tmp', 'tar');
 		$this->streamer = new TarStreamer(
 			['outstream' => fopen($this->archive, 'w')]
 		);
 	}
 	
-	public function tearDown() {
+	public function tearDown(): void {
 		unlink($this->archive);
 	}
 
