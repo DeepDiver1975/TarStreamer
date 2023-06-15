@@ -85,18 +85,6 @@ config = {
                 "apt-get install php8.1-xdebug -y",
             ],
         },
-        "php82": {
-            "phpVersions": ["8.2"],
-            "coverage": False,
-            "databases": [
-                "sqlite",
-            ],
-            "enableApp": False,
-            "extraCommandsBeforeTestRun": [
-                "apt update -y",
-                "apt-get install php8.2-xdebug -y",
-            ],
-        },
     },
 }
 
