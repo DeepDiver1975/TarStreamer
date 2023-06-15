@@ -4,7 +4,6 @@ OC_CI_BAZEL_BUILDIFIER = "owncloudci/bazel-buildifier"
 OC_CI_CORE = "owncloudci/core"
 OC_CI_DRONE_CANCEL_PREVIOUS_BUILDS = "owncloudci/drone-cancel-previous-builds"
 OC_CI_DRONE_SKIP_PIPELINE = "owncloudci/drone-skip-pipeline"
-OC_CI_ORACLE_XE = "owncloudci/oracle-xe:latest"
 OC_CI_PHP = "owncloudci/php:%s"
 OC_UBUNTU = "owncloud/ubuntu:20.04"
 PLUGINS_S3 = "plugins/s3"
@@ -372,15 +371,11 @@ def phpTests(ctx, testType, withCoverage):
     errorFound = False
 
     # The default PHP unit test settings for a PR.
-    # Note: do not run Oracle by default in PRs.
     prDefault = {
         "phpVersions": [DEFAULT_PHP_VERSION],
         "servers": ["daily-master-qa"],
         "databases": [
             "sqlite",
-            "mariadb:10.2",
-            "mysql:8.0",
-            "postgres:9.4",
         ],
         "coverage": True,
         "includeKeyInMatrixName": False,
@@ -397,10 +392,6 @@ def phpTests(ctx, testType, withCoverage):
         "servers": ["daily-master-qa"],
         "databases": [
             "sqlite",
-            "mariadb:10.2",
-            "mysql:8.0",
-            "postgres:9.4",
-            "oracle",
         ],
         "coverage": True,
         "includeKeyInMatrixName": False,
@@ -502,8 +493,6 @@ def phpTests(ctx, testType, withCoverage):
                                          ],
                                      },
                                  ],
-                        "services": databaseService(db) +
-                                    params["extraServices"],
                         "depends_on": [],
                         "trigger": {
                             "ref": [
@@ -691,79 +680,19 @@ def notify():
 
     return result
 
-def databaseService(db):
-    dbName = getDbName(db)
-    if (dbName == "mariadb") or (dbName == "mysql"):
-        service = {
-            "name": dbName,
-            "image": db,
-            "environment": {
-                "MYSQL_USER": getDbUsername(db),
-                "MYSQL_PASSWORD": getDbPassword(db),
-                "MYSQL_DATABASE": getDbDatabase(db),
-                "MYSQL_ROOT_PASSWORD": getDbRootPassword(),
-            },
-        }
-        if (db == "mysql:8.0"):
-            service["command"] = ["--default-authentication-plugin=mysql_native_password"]
-        return [service]
-
-    if dbName == "postgres":
-        return [{
-            "name": dbName,
-            "image": db,
-            "environment": {
-                "POSTGRES_USER": getDbUsername(db),
-                "POSTGRES_PASSWORD": getDbPassword(db),
-                "POSTGRES_DB": getDbDatabase(db),
-            },
-        }]
-
-    if dbName == "oracle":
-        return [{
-            "name": dbName,
-            "image": OC_CI_ORACLE_XE,
-            "environment": {
-                "ORACLE_USER": getDbUsername(db),
-                "ORACLE_PASSWORD": getDbPassword(db),
-                "ORACLE_DB": getDbDatabase(db),
-                "ORACLE_DISABLE_ASYNCH_IO": "true",
-            },
-        }]
-
-    return []
-
 def getDbName(db):
     return db.split(":")[0]
 
 def getDbUsername(db):
-    name = getDbName(db)
-
-    # The Oracle image has the Db Username hardcoded
-    if name == "oracle":
-        return "autotest"
-
     return "owncloud"
 
 def getDbPassword(db):
-    name = getDbName(db)
-
-    # The Oracle image has the Db Password hardcoded
-    if name == "oracle":
-        return "owncloud"
-
     return "owncloud"
 
 def getDbRootPassword():
     return "owncloud"
 
 def getDbDatabase(db):
-    name = getDbName(db)
-
-    # The Oracle image has the Db Name hardcoded
-    if name == "oracle":
-        return "XE"
-
     return "owncloud"
 
 def cacheRestore():
@@ -809,15 +738,6 @@ def installCore(ctx, version, db, useBundledApp):
     username = getDbUsername(db)
     password = getDbPassword(db)
     database = getDbDatabase(db)
-
-    if host == "mariadb":
-        dbType = "mysql"
-
-    if host == "postgres":
-        dbType = "pgsql"
-
-    if host == "oracle":
-        dbType = "oci"
 
     stepDefinition = {
         "name": "install-core",
