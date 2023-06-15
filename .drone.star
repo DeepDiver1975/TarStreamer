@@ -15,7 +15,6 @@ DEFAULT_PHP_VERSION = "7.4"
 
 dir = {
     "base": "/var/www/owncloud",
-    "server": "/var/www/owncloud/server",
 }
 
 config = {
@@ -33,9 +32,6 @@ config = {
         "php74": {
             "phpVersions": ["7.4"],
             "coverage": False,
-            "databases": [
-                "sqlite",
-            ],
             "extraCommandsBeforeTestRun": [
                 "apt update -y",
                 "apt-get install php7.4-xdebug -y",
@@ -44,9 +40,6 @@ config = {
         "php80": {
             "phpVersions": ["8.0"],
             "coverage": False,
-            "databases": [
-                "sqlite",
-            ],
             "extraCommandsBeforeTestRun": [
                 "apt update -y",
                 "apt-get install php8.0-xdebug -y",
@@ -55,9 +48,6 @@ config = {
         "php81": {
             "phpVersions": ["8.1"],
             "coverage": False,
-            "databases": [
-                "sqlite",
-            ],
             "extraCommandsBeforeTestRun": [
                 "apt update -y",
                 "apt-get install php8.1-xdebug -y",
@@ -371,10 +361,6 @@ def phpTests(ctx, testType, withCoverage):
     # The default PHP unit test settings for a PR.
     prDefault = {
         "phpVersions": [DEFAULT_PHP_VERSION],
-        "servers": ["daily-master-qa"],
-        "databases": [
-            "sqlite",
-        ],
         "coverage": True,
         "includeKeyInMatrixName": False,
         "extraSetup": [],
@@ -387,10 +373,6 @@ def phpTests(ctx, testType, withCoverage):
     # The default PHP unit test settings for the cron job (usually runs nightly).
     cronDefault = {
         "phpVersions": [DEFAULT_PHP_VERSION],
-        "servers": ["daily-master-qa"],
-        "databases": [
-            "sqlite",
-        ],
         "coverage": True,
         "includeKeyInMatrixName": False,
         "extraSetup": [],
@@ -456,82 +438,76 @@ def phpTests(ctx, testType, withCoverage):
             # that have longer names like 7.4-ubuntu20.04
             phpVersionForPipelineName = phpVersion[0:3]
 
-            for server in params["servers"]:
-                for db in params["databases"]:
-                    keyString = "-" + category if params["includeKeyInMatrixName"] else ""
-                    if len(params["servers"]) > 1:
-                        serverString = "-%s" % server.replace("daily-", "").replace("-qa", "")
-                    else:
-                        serverString = ""
-                    name = "%s%s-php%s%s-%s" % (testType, keyString, phpVersionForPipelineName, serverString, db.replace(":", ""))
-                    maxLength = 50
-                    nameLength = len(name)
-                    if nameLength > maxLength:
-                        print("Error: generated phpunit stage name of length", nameLength, "is not supported. The maximum length is " + str(maxLength) + ".", name)
-                        errorFound = True
+            keyString = "-" + category if params["includeKeyInMatrixName"] else ""
+            name = "%s%s-php%s" % (testType, keyString, phpVersionForPipelineName)
+            maxLength = 50
+            nameLength = len(name)
+            if nameLength > maxLength:
+                print("Error: generated phpunit stage name of length", nameLength, "is not supported. The maximum length is " + str(maxLength) + ".", name)
+                errorFound = True
 
-                    result = {
-                        "kind": "pipeline",
-                        "type": "docker",
-                        "name": name,
-                        "workspace": {
-                            "base": dir["base"],
-                            "path": "server/apps/%s" % ctx.repo.name,
-                        },
-                        "steps": skipIfUnchanged(ctx, "unit-tests") +
-                                 params["extraSetup"] +
-                                 [
-                                     {
-                                         "name": "%s-tests" % testType,
-                                         "image": OC_CI_PHP % phpVersion,
-                                         "environment": params["extraEnvironment"],
-                                         "commands": params["extraCommandsBeforeTestRun"] + [
-                                             command,
-                                         ],
-                                     },
+            result = {
+                "kind": "pipeline",
+                "type": "docker",
+                "name": name,
+                "workspace": {
+                    "base": dir["base"],
+                    "path": "server/apps/%s" % ctx.repo.name,
+                },
+                "steps": skipIfUnchanged(ctx, "unit-tests") +
+                         params["extraSetup"] +
+                         [
+                             {
+                                 "name": "%s-tests" % testType,
+                                 "image": OC_CI_PHP % phpVersion,
+                                 "environment": params["extraEnvironment"],
+                                 "commands": params["extraCommandsBeforeTestRun"] + [
+                                     command,
                                  ],
-                        "depends_on": [],
-                        "trigger": {
-                            "ref": [
-                                "refs/pull/**",
-                                "refs/tags/**",
-                            ],
+                             },
+                         ],
+                "depends_on": [],
+                "trigger": {
+                    "ref": [
+                        "refs/pull/**",
+                        "refs/tags/**",
+                    ],
+                },
+            }
+
+            if params["coverage"]:
+                result["steps"].append({
+                    "name": "coverage-rename",
+                    "image": OC_CI_PHP % phpVersion,
+                    "commands": [
+                        "mv tests/output/clover.xml tests/output/clover-%s.xml" % (name),
+                    ],
+                })
+                result["steps"].append({
+                    "name": "coverage-cache-1",
+                    "image": PLUGINS_S3,
+                    "settings": {
+                        "endpoint": {
+                            "from_secret": "cache_s3_endpoint",
                         },
-                    }
+                        "bucket": "cache",
+                        "source": "tests/output/clover-%s.xml" % (name),
+                        "target": "%s/%s" % (ctx.repo.slug, ctx.build.commit + "-${DRONE_BUILD_NUMBER}"),
+                        "path_style": True,
+                        "strip_prefix": "tests/output",
+                        "access_key": {
+                            "from_secret": "cache_s3_access_key",
+                        },
+                        "secret_key": {
+                            "from_secret": "cache_s3_secret_key",
+                        },
+                    },
+                })
 
-                    if params["coverage"]:
-                        result["steps"].append({
-                            "name": "coverage-rename",
-                            "image": OC_CI_PHP % phpVersion,
-                            "commands": [
-                                "mv tests/output/clover.xml tests/output/clover-%s.xml" % (name),
-                            ],
-                        })
-                        result["steps"].append({
-                            "name": "coverage-cache-1",
-                            "image": PLUGINS_S3,
-                            "settings": {
-                                "endpoint": {
-                                    "from_secret": "cache_s3_endpoint",
-                                },
-                                "bucket": "cache",
-                                "source": "tests/output/clover-%s.xml" % (name),
-                                "target": "%s/%s" % (ctx.repo.slug, ctx.build.commit + "-${DRONE_BUILD_NUMBER}"),
-                                "path_style": True,
-                                "strip_prefix": "tests/output",
-                                "access_key": {
-                                    "from_secret": "cache_s3_access_key",
-                                },
-                                "secret_key": {
-                                    "from_secret": "cache_s3_secret_key",
-                                },
-                            },
-                        })
+            for branch in config["branches"]:
+                result["trigger"]["ref"].append("refs/heads/%s" % branch)
 
-                    for branch in config["branches"]:
-                        result["trigger"]["ref"].append("refs/heads/%s" % branch)
-
-                    pipelines.append(result)
+            pipelines.append(result)
 
     if errorFound:
         return False
