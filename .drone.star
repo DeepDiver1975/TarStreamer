@@ -50,7 +50,7 @@ config = {
     "phan": False,
     "phpunit": {
         "php74": {
-            "phpVersions": [7.4],
+            "phpVersions": ["7.4"],
             "coverage": False,
             "databases": [
                 "sqlite",
@@ -62,7 +62,7 @@ config = {
             ],
         },
         "php80": {
-            "phpVersions": [8.0],
+            "phpVersions": ["8.0"],
             "coverage": False,
             "databases": [
                 "sqlite",
@@ -74,7 +74,7 @@ config = {
             ],
         },
         "php81": {
-            "phpVersions": [8.1],
+            "phpVersions": ["8.1"],
             "coverage": False,
             "databases": [
                 "sqlite",
@@ -86,7 +86,7 @@ config = {
             ],
         },
         "php82": {
-            "phpVersions": [8.2],
+            "phpVersions": ["8.2"],
             "coverage": False,
             "databases": [
                 "sqlite",
