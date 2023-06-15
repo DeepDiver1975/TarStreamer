@@ -48,7 +48,11 @@ config = {
     "codestyle": True,
     "phpstan": False,
     "phan": False,
-    "phpunit": True,
+    "phpunit": {
+        "defaultDatabases": {
+            "enableApp": False,
+        },
+    },
 }
 
 def main(ctx):
