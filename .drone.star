@@ -265,7 +265,6 @@ def phpstan(ctx):
                     "path": "server/apps/%s" % ctx.repo.name,
                 },
                 "steps": skipIfUnchanged(ctx, "lint") +
-                         installCore(ctx, "daily-master-qa", "sqlite", False) +
                          [
                              {
                                  "name": "phpstan",
@@ -336,7 +335,6 @@ def phan(ctx):
                     "path": "server/apps/%s" % ctx.repo.name,
                 },
                 "steps": skipIfUnchanged(ctx, "lint") +
-                         installCore(ctx, "daily-master-qa", "sqlite", False) +
                          [
                              {
                                  "name": "phan",
@@ -481,7 +479,6 @@ def phpTests(ctx, testType, withCoverage):
                             "path": "server/apps/%s" % ctx.repo.name,
                         },
                         "steps": skipIfUnchanged(ctx, "unit-tests") +
-                                 installCore(ctx, server, db, False) +
                                  params["extraSetup"] +
                                  [
                                      {
@@ -582,7 +579,6 @@ def sonarAnalysis(ctx, phpVersion = DEFAULT_PHP_VERSION):
                  skipIfUnchanged(ctx, "unit-tests") +
                  cacheRestore() +
                  composerInstall(phpVersion) +
-                 installCore(ctx, "daily-master-qa", "sqlite", False) +
                  [
                      {
                          "name": "sync-from-cache",
@@ -680,21 +676,6 @@ def notify():
 
     return result
 
-def getDbName(db):
-    return db.split(":")[0]
-
-def getDbUsername(db):
-    return "owncloud"
-
-def getDbPassword(db):
-    return "owncloud"
-
-def getDbRootPassword():
-    return "owncloud"
-
-def getDbDatabase(db):
-    return "owncloud"
-
 def cacheRestore():
     return [{
         "name": "cache-restore",
@@ -730,33 +711,6 @@ def composerInstall(phpVersion):
             "make vendor",
         ],
     }]
-
-def installCore(ctx, version, db, useBundledApp):
-    host = getDbName(db)
-    dbType = host
-
-    username = getDbUsername(db)
-    password = getDbPassword(db)
-    database = getDbDatabase(db)
-
-    stepDefinition = {
-        "name": "install-core",
-        "image": OC_CI_CORE,
-        "settings": {
-            "version": version,
-            "core_path": dir["server"],
-            "db_type": dbType,
-            "db_name": database,
-            "db_host": host,
-            "db_username": username,
-            "db_password": password,
-        },
-    }
-
-    if not useBundledApp:
-        stepDefinition["settings"]["exclude"] = "apps/%s" % ctx.repo.name
-
-    return [stepDefinition]
 
 def dependsOn(earlierStages, nextStages):
     for earlierStage in earlierStages:
