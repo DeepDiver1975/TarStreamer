@@ -52,6 +52,10 @@ config = {
         "defaultDatabases": {
             "coverage": False,
             "enableApp": False,
+            "extraCommandsBeforeTestRun": [
+                "apt update -y",
+                "apt-get install php7.4-xdebug -y",
+            ],
         },
     },
 }
