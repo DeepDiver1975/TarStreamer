@@ -5,6 +5,7 @@ composer.lock
 vendor-bin/**/vendor
 vendor-bin/**/composer.lock
 .php-cs-fixer.cache
+.phpunit.result.cache
 
 # drone CI is in .drone.star, do not let someone accidentally commit a local .drone.yml
 .drone.yml
