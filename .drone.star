@@ -50,6 +50,7 @@ config = {
     "phan": False,
     "phpunit": {
         "defaultDatabases": {
+            "coverage": False,
             "enableApp": False,
         },
     },
