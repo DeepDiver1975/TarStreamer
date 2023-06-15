@@ -1,11 +1,9 @@
 MINIO_MC = "minio/mc:RELEASE.2020-12-18T10-53-53Z"
 OC_CI_ALPINE = "owncloudci/alpine:latest"
 OC_CI_BAZEL_BUILDIFIER = "owncloudci/bazel-buildifier"
-OC_CI_CORE = "owncloudci/core"
 OC_CI_DRONE_CANCEL_PREVIOUS_BUILDS = "owncloudci/drone-cancel-previous-builds"
 OC_CI_DRONE_SKIP_PIPELINE = "owncloudci/drone-skip-pipeline"
 OC_CI_PHP = "owncloudci/php:%s"
-OC_UBUNTU = "owncloud/ubuntu:20.04"
 PLUGINS_S3 = "plugins/s3"
 PLUGINS_S3_CACHE = "plugins/s3-cache:1"
 PLUGINS_SLACK = "plugins/slack:1"
@@ -364,7 +362,6 @@ def phpTests(ctx, testType, withCoverage):
         "coverage": True,
         "includeKeyInMatrixName": False,
         "extraSetup": [],
-        "extraServices": [],
         "extraEnvironment": {},
         "extraCommandsBeforeTestRun": [],
         "skip": False,
@@ -376,7 +373,6 @@ def phpTests(ctx, testType, withCoverage):
         "coverage": True,
         "includeKeyInMatrixName": False,
         "extraSetup": [],
-        "extraServices": [],
         "extraEnvironment": {},
         "extraCommandsBeforeTestRun": [],
         "skip": False,
