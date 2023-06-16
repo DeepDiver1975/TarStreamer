@@ -14,9 +14,7 @@ class TarHeader {
 	private $size;
 	
 	private $mtime = '';
-	
-	private $checksum;
-	
+
 	private $typeflag;
 	
 	private $linkname = '';
