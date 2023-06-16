@@ -24,8 +24,8 @@ config = {
         "master",
     ],
     "codestyle": True,
-    "phpstan": False,
-    "phan": False,
+    "phpstan": True,
+    "phan": True,
     "phpunit": {
         "php74": {
             "phpVersions": ["7.4"],

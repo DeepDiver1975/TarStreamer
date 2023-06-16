@@ -14,9 +14,7 @@ class TarHeader {
 	private $size;
 	
 	private $mtime = '';
-	
-	private $checksum;
-	
+
 	private $typeflag;
 	
 	private $linkname = '';
@@ -66,8 +64,8 @@ class TarHeader {
 		$fields = [
 			['a100', substr($this->name, 0, 100)],
 			['a8', str_pad($this->mode, 7, '0', STR_PAD_LEFT)],
-			['a8', decoct(str_pad($this->uid, 7, '0', STR_PAD_LEFT))],
-			['a8', decoct(str_pad($this->gid, 7, '0', STR_PAD_LEFT))],
+			['a8', decoct((int) str_pad($this->uid, 7, '0', STR_PAD_LEFT))],
+			['a8', decoct((int) str_pad($this->gid, 7, '0', STR_PAD_LEFT))],
 			['a12', str_pad(decoct((int)$this->size), 11, '0', STR_PAD_LEFT)],
 			['a12', str_pad(decoct((int)$this->mtime), 11, '0', STR_PAD_LEFT)],
 			// We calculate checksum later
@@ -124,7 +122,7 @@ class TarHeader {
 	 * Generate unsigned checksum of header
 	 *
 	 * @param string $header
-	 * @return string unsigned checksum
+	 * @return float|int unsigned checksum
 	 */
 	protected function computeUnsignedChecksum($header) {
 		$unsignedChecksum = 0;
