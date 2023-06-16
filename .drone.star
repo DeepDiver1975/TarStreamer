@@ -25,7 +25,7 @@ config = {
     ],
     "codestyle": True,
     "phpstan": False,
-    "phan": False,
+    "phan": True,
     "phpunit": {
         "php74": {
             "phpVersions": ["7.4"],
