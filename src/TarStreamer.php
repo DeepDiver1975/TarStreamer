@@ -149,7 +149,7 @@ class TarStreamer {
 	 * Initialize a file stream
 	 *
 	 * @param string $name file path or just name
-	 * @param int $type type of the item
+	 * @param int|string $type type of the item
 	 * @param int $size size in bytes of the file
 	 * @param array $opt array  (optional)
 	 *                   Valid options are:
@@ -248,7 +248,7 @@ class TarStreamer {
 	 * Generate a PAX string
 	 *
 	 * @param array $fields key value mapping
-	 * @return string PAX formated string
+	 * @return string PAX formatted string
 	 * @link http://www.freebsd.org/cgi/man.cgi?query=tar&sektion=5&manpath=FreeBSD+8-current tar / PAX spec
 	 */
 	protected function paxGenerate($fields) {
@@ -256,7 +256,7 @@ class TarStreamer {
 		foreach ($fields as $name => $value) {
 			// build the line and the size
 			$line = ' ' . $name . '=' . $value . "\n";
-			$size = \strlen(\strlen($line)) + \strlen($line);
+			$size = \strlen((string) \strlen($line)) + \strlen($line);
 
 			// add the line
 			$lines .= $size . $line;
