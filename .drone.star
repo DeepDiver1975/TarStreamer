@@ -1,7 +1,6 @@
 MINIO_MC = "minio/mc:RELEASE.2020-12-18T10-53-53Z"
 OC_CI_ALPINE = "owncloudci/alpine:latest"
 OC_CI_BAZEL_BUILDIFIER = "owncloudci/bazel-buildifier"
-OC_CI_DRONE_CANCEL_PREVIOUS_BUILDS = "owncloudci/drone-cancel-previous-builds"
 OC_CI_DRONE_SKIP_PIPELINE = "owncloudci/drone-skip-pipeline"
 OC_CI_PHP = "owncloudci/php:%s"
 PLUGINS_S3 = "plugins/s3"
@@ -11,6 +10,22 @@ SONARSOURCE_SONAR_SCANNER_CLI = "sonarsource/sonar-scanner-cli"
 
 DEFAULT_PHP_VERSION = "7.4"
 
+# minio mc environment variables
+MINIO_MC_ENV = {
+    "CACHE_BUCKET": {
+        "from_secret": "cache_s3_bucket",
+    },
+    "MC_HOST": {
+        "from_secret": "cache_s3_server",
+    },
+    "AWS_ACCESS_KEY_ID": {
+        "from_secret": "cache_s3_access_key",
+    },
+    "AWS_SECRET_ACCESS_KEY": {
+        "from_secret": "cache_s3_secret_key",
+    },
+}
+
 dir = {
     "base": "/var/www/owncloud",
 }
@@ -18,7 +33,7 @@ dir = {
 config = {
     "rocketchat": {
         "channel": "builds",
-        "from_secret": "private_rocketchat",
+        "from_secret": "rocketchat_chat_webhook",
     },
     "branches": [
         "master",
@@ -83,7 +98,7 @@ def main(ctx):
     return before + coverageTests + afterCoverageTests + nonCoverageTests + after
 
 def beforePipelines(ctx):
-    return codestyle(ctx) + cancelPreviousBuilds() + phpstan(ctx) + phan(ctx) + phplint(ctx) + checkStarlark()
+    return codestyle(ctx) + phpstan(ctx) + phan(ctx) + phplint(ctx) + checkStarlark()
 
 def coveragePipelines(ctx):
     # All unit test pipelines that have coverage or other test analysis reported
@@ -182,31 +197,6 @@ def codestyle(ctx):
             pipelines.append(result)
 
     return pipelines
-
-def cancelPreviousBuilds():
-    return [{
-        "kind": "pipeline",
-        "type": "docker",
-        "name": "cancel-previous-builds",
-        "clone": {
-            "disable": True,
-        },
-        "steps": [{
-            "name": "cancel-previous-builds",
-            "image": OC_CI_DRONE_CANCEL_PREVIOUS_BUILDS,
-            "settings": {
-                "DRONE_TOKEN": {
-                    "from_secret": "drone_token",
-                },
-            },
-        }],
-        "depends_on": [],
-        "trigger": {
-            "ref": [
-                "refs/pull/**",
-            ],
-        },
-    }]
 
 def phpstan(ctx):
     pipelines = []
@@ -484,7 +474,7 @@ def phpTests(ctx, testType, withCoverage):
                     "image": PLUGINS_S3,
                     "settings": {
                         "endpoint": {
-                            "from_secret": "cache_s3_endpoint",
+                            "from_secret": "cache_s3_server",
                         },
                         "bucket": "cache",
                         "source": "tests/output/clover-%s.xml" % (name),
@@ -555,13 +545,10 @@ def sonarAnalysis(ctx, phpVersion = DEFAULT_PHP_VERSION):
                      {
                          "name": "sync-from-cache",
                          "image": MINIO_MC,
-                         "environment": {
-                             "MC_HOST_cache": {
-                                 "from_secret": "cache_s3_connection_url",
-                             },
-                         },
+                         "environment": MINIO_MC_ENV,
                          "commands": [
                              "mkdir -p results",
+                             "mc alias set cache $MC_HOST $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY",
                              "mc mirror cache/cache/%s/%s results/" % (ctx.repo.slug, ctx.build.commit + "-${DRONE_BUILD_NUMBER}"),
                          ],
                      },
@@ -586,12 +573,9 @@ def sonarAnalysis(ctx, phpVersion = DEFAULT_PHP_VERSION):
                      {
                          "name": "purge-cache",
                          "image": MINIO_MC,
-                         "environment": {
-                             "MC_HOST_cache": {
-                                 "from_secret": "cache_s3_connection_url",
-                             },
-                         },
+                         "environment": MINIO_MC_ENV,
                          "commands": [
+                             "mc alias set cache $MC_HOST $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY",
                              "mc rm --recursive --force cache/cache/%s/%s" % (ctx.repo.slug, ctx.build.commit + "-${DRONE_BUILD_NUMBER}"),
                          ],
                      },
@@ -657,7 +641,7 @@ def cacheRestore():
                 "from_secret": "cache_s3_access_key",
             },
             "endpoint": {
-                "from_secret": "cache_s3_endpoint",
+                "from_secret": "cache_s3_server",
             },
             "restore": True,
             "secret_key": {
